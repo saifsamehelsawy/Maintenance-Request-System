@@ -1,0 +1,155 @@
+@model MaintenanceRequestSystem.DTOs.Common.PagedResult<MaintenanceRequestSystem.DTOs.Requests.RequestListDto>
+@using MaintenanceRequestSystem.Models.Enums
+@{
+    ViewData["Title"] = "Maintenance Requests";
+    var filter = ViewBag.Filter as MaintenanceRequestSystem.DTOs.Requests.RequestFilterDto;
+    var categories = ViewBag.Categories as List<MaintenanceRequestSystem.DTOs.Categories.CategoryDto>;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-clipboard-list me-2 text-primary"></i>Maintenance Requests</h2>
+    @if (User.IsInRole("Employee"))
+    {
+        <a href="/Requests/Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>New Request
+        </a>
+    }
+</div>
+
+<!-- Filter Form -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2">
+            <div class="col-md-3">
+                <input type="text" name="search" class="form-control" placeholder="Search..."
+                       value="@filter?.Search" />
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select">
+                    <option value="">All Status</option>
+                    @foreach (var s in Enum.GetNames<RequestStatus>())
+                    {
+                        <option value="@s" selected="@(filter?.Status.ToString() == s)">@s</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="priority" class="form-select">
+                    <option value="">All Priority</option>
+                    @foreach (var p in Enum.GetNames<Priority>())
+                    {
+                        <option value="@p" selected="@(filter?.Priority.ToString() == p)">@p</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="categoryId" class="form-select">
+                    <option value="">All Categories</option>
+                    @if (categories != null)
+                    {
+                        @foreach (var cat in categories)
+                        {
+                            <option value="@cat.Id" selected="@(filter?.CategoryId == cat.Id)">@cat.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i></button>
+            </div>
+            <div class="col-md-1">
+                <a href="/Requests" class="btn btn-outline-secondary w-100"><i class="bi bi-x-circle"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Results -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="text-muted small">
+            Showing @((Model.Page - 1) * Model.PageSize + 1) - @Math.Min(Model.Page * Model.PageSize, Model.TotalCount)
+            of @Model.TotalCount requests
+        </span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Request #</th>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Category</th>
+                        <th>Employee</th>
+                        <th>Technician</th>
+                        <th>Created</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var req in Model.Items)
+                    {
+                        <tr>
+                            <td><code class="small">@req.RequestNumber</code></td>
+                            <td>
+                                <a href="/Requests/Details/@req.Id" class="text-decoration-none fw-semibold">
+                                    @(req.Title.Length > 40 ? req.Title.Substring(0, 40) + "..." : req.Title)
+                                </a>
+                            </td>
+                            <td><span class="badge badge-status-@req.Status">@req.Status</span></td>
+                            <td><span class="badge badge-priority-@req.Priority">@req.Priority</span></td>
+                            <td class="small">@req.CategoryName</td>
+                            <td class="small">@req.EmployeeName</td>
+                            <td class="small text-muted">@(req.TechnicianName ?? "-")</td>
+                            <td class="small text-muted">@req.CreatedAt.ToString("MMM d, yyyy")</td>
+                            <td>
+                                <a href="/Requests/Details/@req.Id" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                No requests found
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- Pagination -->
+    @if (Model.TotalPages > 1)
+    {
+        <div class="card-footer">
+            <nav>
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+                        <a class="page-link" href="?page=@(Model.Page - 1)&pageSize=@Model.PageSize&search=@filter?.Search&status=@filter?.Status&priority=@filter?.Priority&categoryId=@filter?.CategoryId">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.Page ? "active" : "")">
+                            <a class="page-link" href="?page=@i&pageSize=@Model.PageSize&search=@filter?.Search&status=@filter?.Status&priority=@filter?.Priority&categoryId=@filter?.CategoryId">
+                                @i
+                            </a>
+                        </li>
+                    }
+                    <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+                        <a class="page-link" href="?page=@(Model.Page + 1)&pageSize=@Model.PageSize&search=@filter?.Search&status=@filter?.Status&priority=@filter?.Priority&categoryId=@filter?.CategoryId">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    }
+</div>

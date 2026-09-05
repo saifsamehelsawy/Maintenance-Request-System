@@ -1,0 +1,49 @@
+@model List<MaintenanceRequestSystem.DTOs.Categories.CategoryDto>
+@{
+    ViewData["Title"] = "Categories";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-tags me-2 text-primary"></i>Categories</h2>
+    <a href="/Categories/Create" class="btn btn-primary"><i class="bi bi-plus me-1"></i>New Category</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr><th>Name</th><th>Description</th><th>Requests</th><th>Active</th><th>Created</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var cat in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@cat.Name</td>
+                        <td class="text-muted small">@(cat.Description ?? "-")</td>
+                        <td><span class="badge bg-primary">@cat.RequestCount</span></td>
+                        <td>
+                            <span class="badge @(cat.IsActive ? "bg-success" : "bg-secondary")">
+                                @(cat.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </td>
+                        <td class="small text-muted">@cat.CreatedAt.ToString("MMM d, yyyy")</td>
+                        <td class="d-flex gap-1">
+                            <a href="/Categories/Edit/@cat.Id" class="btn btn-sm btn-outline-warning">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form method="post" action="/Categories/Delete/@cat.Id"
+                                  onsubmit="return confirm('Delete category?')">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-4">No categories found</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

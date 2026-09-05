@@ -1,0 +1,60 @@
+@model MaintenanceRequestSystem.DTOs.Requests.CreateRequestDto
+@using MaintenanceRequestSystem.Models.Enums
+@{
+    ViewData["Title"] = "New Request";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-plus-circle me-2 text-primary"></i>New Maintenance Request</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
+                        <input asp-for="Title" class="form-control" placeholder="Brief description of the issue" maxlength="150" />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label fw-semibold">Description <span class="text-danger">*</span></label>
+                        <textarea asp-for="Description" class="form-control" rows="5"
+                                  placeholder="Detailed description of the issue..." maxlength="2000"></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="CategoryId" class="form-label fw-semibold">Category <span class="text-danger">*</span></label>
+                            <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-select">
+                                <option value="">Select category...</option>
+                            </select>
+                            <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Priority" class="form-label fw-semibold">Priority <span class="text-danger">*</span></label>
+                            <select asp-for="Priority" class="form-select">
+                                @foreach (var p in Enum.GetValues<Priority>())
+                                {
+                                    <option value="@p">@p</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Priority" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send me-1"></i>Submit Request
+                        </button>
+                        <a href="/Requests" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

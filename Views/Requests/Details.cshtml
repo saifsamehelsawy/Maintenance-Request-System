@@ -1,0 +1,210 @@
+@model MaintenanceRequestSystem.DTOs.Requests.RequestDetailsDto
+@using MaintenanceRequestSystem.Models.Enums
+@{
+    ViewData["Title"] = $"Request {Model.RequestNumber}";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-0"><i class="bi bi-clipboard-check me-2 text-primary"></i>@Model.RequestNumber</h2>
+        <small class="text-muted">Created @Model.CreatedAt.ToString("MMMM d, yyyy 'at' HH:mm")</small>
+    </div>
+    <div class="d-flex gap-2">
+        @if ((User.IsInRole("Employee") && Model.Status == "Pending"))
+        {
+            <a href="/Requests/Edit/@Model.Id" class="btn btn-outline-primary">
+                <i class="bi bi-pencil me-1"></i>Edit
+            </a>
+        }
+        @if (User.IsInRole("Admin") || (User.IsInRole("Employee") && Model.Status == "Pending"))
+        {
+            <form method="post" action="/Requests/Delete/@Model.Id"
+                  onsubmit="return confirm('Delete this request?')" class="d-inline">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="bi bi-trash me-1"></i>Delete
+                </button>
+            </form>
+        }
+        <a href="/Requests" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left: Request Details -->
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Request Details</h5>
+            </div>
+            <div class="card-body">
+                <h4>@Model.Title</h4>
+                <p class="text-muted">@Model.Description</p>
+
+                <div class="row g-3 mt-2">
+                    <div class="col-sm-6">
+                        <label class="fw-semibold text-muted small text-uppercase">Status</label>
+                        <div><span class="badge badge-status-@Model.Status fs-6">@Model.Status</span></div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="fw-semibold text-muted small text-uppercase">Priority</label>
+                        <div><span class="badge badge-priority-@Model.Priority fs-6">@Model.Priority</span></div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="fw-semibold text-muted small text-uppercase">Category</label>
+                        <div>@Model.Category.Name</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="fw-semibold text-muted small text-uppercase">Employee</label>
+                        <div>@Model.Employee.FullName</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="fw-semibold text-muted small text-uppercase">Technician</label>
+                        <div>@(Model.Technician?.FullName ?? "Not Assigned")</div>
+                    </div>
+                    @if (Model.ResolvedAt.HasValue)
+                    {
+                        <div class="col-sm-6">
+                            <label class="fw-semibold text-muted small text-uppercase">Resolved At</label>
+                            <div>@Model.ResolvedAt.Value.ToString("MMM d, yyyy")</div>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.ResolutionNotes))
+                    {
+                        <div class="col-12">
+                            <label class="fw-semibold text-muted small text-uppercase">Resolution Notes</label>
+                            <div class="p-2 bg-light rounded">@Model.ResolutionNotes</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin: Assign Technician -->
+        @if (User.IsInRole("Admin") && Model.Status != "Closed" && Model.Status != "Resolved")
+        {
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header"><h6 class="mb-0"><i class="bi bi-person-plus me-2"></i>Assign Technician</h6></div>
+                <div class="card-body">
+                    <form method="post" action="/Requests/Assign/@Model.Id">
+                        @Html.AntiForgeryToken()
+                        <div class="input-group">
+                            <select name="technicianId" class="form-select" required>
+                                <option value="">Select Technician...</option>
+                                @if (ViewBag.Technicians != null)
+                                {
+                                    foreach (var tech in (List<MaintenanceRequestSystem.DTOs.Users.UserDto>)ViewBag.Technicians)
+                                    {
+                                        <option value="@tech.Id" selected="@(tech.Id == Model.Technician?.Id)">
+                                            @tech.FullName (@tech.Email)
+                                        </option>
+                                    }
+                                }
+                            </select>
+                            <button type="submit" class="btn btn-primary">Assign</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+
+        <!-- Technician/Admin: Change Status -->
+        @if ((User.IsInRole("Technician") || User.IsInRole("Admin")) &&
+             Model.Status != "Closed")
+        {
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header"><h6 class="mb-0"><i class="bi bi-arrow-repeat me-2"></i>Change Status</h6></div>
+                <div class="card-body">
+                    <form method="post" action="/Requests/ChangeStatus/@Model.Id">
+                        @Html.AntiForgeryToken()
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <select name="status" class="form-select">
+                                    @foreach (var s in Enum.GetValues<RequestStatus>())
+                                    {
+                                        if (s.ToString() != Model.Status)
+                                        {
+                                            <option value="@s">@s</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <input type="text" name="resolutionNotes" class="form-control"
+                                       placeholder="Resolution notes (optional)" />
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-warning w-100">Update</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+
+        <!-- Comments -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header"><h6 class="mb-0"><i class="bi bi-chat-dots me-2"></i>Comments (@Model.Comments.Count)</h6></div>
+            <div class="card-body">
+                @foreach (var comment in Model.Comments)
+                {
+                    <div class="d-flex mb-3">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3"
+                             style="width:36px;height:36px;min-width:36px;font-size:14px">
+                            @comment.UserName.Substring(0, 1).ToUpper()
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold small">@comment.UserName <span class="text-muted fw-normal">@comment.CreatedAt.ToString("MMM d, yyyy HH:mm")</span></div>
+                            <div class="mt-1">@comment.CommentText</div>
+                        </div>
+                    </div>
+                }
+                @if (!Model.Comments.Any())
+                {
+                    <p class="text-muted text-center py-2">No comments yet</p>
+                }
+                <hr />
+                <form method="post" action="/Requests/AddComment/@Model.Id">
+                    @Html.AntiForgeryToken()
+                    <div class="input-group">
+                        <input type="text" name="commentText" class="form-control" placeholder="Add a comment..." required maxlength="1000" />
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: History Timeline -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header"><h6 class="mb-0"><i class="bi bi-clock-history me-2"></i>History</h6></div>
+            <div class="card-body">
+                @foreach (var h in Model.History)
+                {
+                    <div class="d-flex mb-3">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-light border d-flex align-items-center justify-content-center"
+                                 style="width:32px;height:32px">
+                                <i class="bi bi-circle-fill text-primary small"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold small">@h.Action.Replace("_", " ")</div>
+                            <div class="small text-muted">@h.Description</div>
+                            <div class="small text-muted">
+                                @h.UserName — @h.CreatedAt.ToString("MMM d, HH:mm")
+                            </div>
+                        </div>
+                    </div>
+                }
+                @if (!Model.History.Any())
+                {
+                    <p class="text-muted text-center">No history</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
