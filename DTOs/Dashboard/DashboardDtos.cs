@@ -65,3 +65,4 @@ public class EmployeeDashboardDto
     public int MyClosedRequests { get; set; }
     public List<RecentRequestDto> MyRecentRequests { get; set; } = new();
 }
+// Updated dashboard data transfer objects
