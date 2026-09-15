@@ -3,7 +3,7 @@ using MaintenanceRequestSystem.DTOs.Dashboard;
 using MaintenanceRequestSystem.Models.Enums;
 using MaintenanceRequestSystem.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
-// Dashboard service
+
 namespace MaintenanceRequestSystem.Services;
 
 public class DashboardService : IDashboardService
