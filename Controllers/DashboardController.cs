@@ -38,4 +38,3 @@ public class DashboardController : Controller
         }
     }
 }
-// Update DashboardController endpoints to use updated DTO models
