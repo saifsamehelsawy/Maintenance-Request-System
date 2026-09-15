@@ -17,7 +17,12 @@ public class HomeController : Controller
     public IActionResult Index()
     {
         if (User.Identity?.IsAuthenticated == true)
+        {
+            _logger.LogInformation("Authenticated user accessed HomeController.");
             return RedirectToAction("Index", "Dashboard");
+        }
+
+        _logger.LogInformation("Unauthenticated user redirected to Login.");
         return RedirectToAction("Login", "Account");
     }
 
