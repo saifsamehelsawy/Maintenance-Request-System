@@ -1,38 +1,16 @@
 using MaintenanceRequestSystem.Extensions;
-using MaintenanceRequestSystem.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ── Services ──────────────────────────────────────────────────────────────
 builder.Services.AddDatabase(builder.Configuration);
 builder.Services.AddIdentityServices();
-builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddApplicationServices();
-builder.Services.AddSwaggerDocumentation();
-builder.Services.AddCorsPolicy(builder.Configuration);
-builder.Services.AddRateLimitingPolicy(builder.Configuration);
 
-builder.Services.AddControllersWithViews()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(
-            new System.Text.Json.Serialization.JsonStringEnumConverter());
-    });
+builder.Services.AddControllersWithViews();
 
 // ── App Pipeline ──────────────────────────────────────────────────────────
 var app = builder.Build();
-
-// Global Exception Handler (must be first)
-app.UseMiddleware<GlobalExceptionMiddleware>();
-
-// Swagger enabled in all environments
-app.UseSwagger();
-app.UseSwaggerUI(c =>
-{
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Maintenance Request System API v1");
-    c.RoutePrefix = "swagger";
-    c.DisplayRequestDuration();
-});
 
 if (!app.Environment.IsDevelopment())
 {
@@ -40,19 +18,13 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// Redirect unauthenticated root access to Login
 app.UseStaticFiles();
 app.UseRouting();
 
-// CORS before Auth
-app.UseCors(app.Environment.IsDevelopment() ? "DevelopmentCors" : "ProductionCors");
-
-app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// MVC routes & Attribute API routes
-app.MapControllers();
+// MVC routes
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Dashboard}/{action=Index}/{id?}");
